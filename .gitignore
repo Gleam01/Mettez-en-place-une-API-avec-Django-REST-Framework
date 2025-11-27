@@ -2,3 +2,6 @@
 .idea
 *.sqlite3
 __pycache__/
+env
+.python-version
+.DS_Store
