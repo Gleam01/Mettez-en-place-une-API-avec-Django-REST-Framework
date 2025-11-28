@@ -1,7 +1,14 @@
 from rest_framework import serializers
 from shop.models import Category, Product, Article
 
-class CategorySerializer(serializers.ModelSerializer):
+class CategoryListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = ['id', 'date_created', 'date_updated', 'name']
+
+
+class CategoryDetailSerializer(serializers.ModelSerializer):
     # En utilisant un `SerializerMethodField', il est nécessaire d'écrire une méthode
     # nommée 'get_XXX' où XXX est le nom de l'attribut, ici 'products'
     products = serializers.SerializerMethodField()
