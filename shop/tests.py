@@ -3,6 +3,7 @@ from rest_framework.test import APITestCase
 
 from shop.models import Category, Product
 
+
 class ShopAPITestCase(APITestCase):
 
     @classmethod
@@ -67,6 +68,16 @@ class TestCategory(ShopAPITestCase):
         self.assertEqual(response.status_code, 405)
         self.assertEqual(Category.objects.count(), category_count)
 
+    def test_disable(self):
+        response = self.client.post(reverse('category-disable', kwargs={'pk': self.category.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.category.refresh_from_db()
+        self.assertFalse(self.category.active)
+        for product in self.category.products.all():
+            self.assertFalse(product.active)
+            for article in product.articles.all():
+                self.assertFalse(article.active)
+
 
 class TestProduct(ShopAPITestCase):
 
@@ -87,6 +98,14 @@ class TestProduct(ShopAPITestCase):
         response = self.client.post(self.url, data={'name': 'Nouvelle catégorie'})
         self.assertEqual(response.status_code, 405)
         self.assertEqual(Product.objects.count(), product_count)
+
+    def test_disable(self):
+        response = self.client.post(reverse('product-disable', kwargs={'pk': self.product.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.product.refresh_from_db()
+        self.assertFalse(self.product.active)
+        for article in self.product.articles.all():
+            self.assertFalse(article.active)
 
     def test_delete(self):
         response = self.client.delete(reverse('product-detail', kwargs={'pk': self.product.pk}))

@@ -41,6 +41,12 @@ class ProductViewset(ReadOnlyModelViewSet):
             queryset = queryset.filter(category_id=category_id)
     
         return queryset
+    
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk):
+        instance = self.get_object()
+        instance.disable()
+        return Response()
 
 
 class ArticleViewset(ReadOnlyModelViewSet):
