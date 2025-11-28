@@ -1,4 +1,4 @@
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
@@ -21,6 +21,20 @@ class CategoryViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
  
     def get_queryset(self):
         return Category.objects.filter(active=True)
+
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk):
+        instance = self.get_object()
+        instance.disable()
+        return Response()
+    
+class AdminCategoryViewset(MultipleSerializerMixin, ModelViewSet):
+    
+    serializer_class = CategoryListSerializer
+    detail_serializer_class = CategoryDetailSerializer
+
+    def get_queryset(self):
+        return Category.objects.all()
 
     @action(detail=True, methods=['post'])
     def disable(self, request, pk):

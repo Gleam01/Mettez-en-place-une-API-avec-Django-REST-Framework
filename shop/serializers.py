@@ -7,6 +7,15 @@ class CategoryListSerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'date_created', 'date_updated', 'name']
 
+    def validate_name(self, value):
+        if Category.objects.filter(name=value).exists():
+            raise serializers.ValidationError("Category already exists.")
+        return value
+    
+    def validate(self, data):
+        if data['name'] not in data['description']:
+            raise serializers.ValidationError("Name must be in description.")
+        return data
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
     # En utilisant un `SerializerMethodField', il est nécessaire d'écrire une méthode
