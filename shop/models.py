@@ -19,7 +19,8 @@ class Category(models.Model):
             return
         self.active = False
         self.save()
-        self.products.update(active=False)
+        for product in self.products.all():
+            product.disable()
 
 
 class Product(models.Model):
@@ -35,6 +36,14 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @transaction.atomic
+    def disable(self):
+        if self.active is False:
+            return
+        self.active = False
+        self.save()
+        self.articles.update(active=False)
 
 
 class Article(models.Model):
