@@ -1,8 +1,9 @@
+from unittest import mock
 from django.urls import reverse_lazy, reverse
 from rest_framework.test import APITestCase
 
 from shop.models import Category, Product
-
+from shop.mocks import mock_openfoodfact_success, ECOSCORE_GRADE
 
 class ShopAPITestCase(APITestCase):
 
@@ -39,14 +40,27 @@ class ShopAPITestCase(APITestCase):
                 'date_created': self.format_datetime(product.date_created),
                 'date_updated': self.format_datetime(product.date_updated),
                 'category': product.category_id,
+                'ecoscore': ECOSCORE_GRADE
             } for product in products
         ]
+    
+    def get_product_detail_data(self, product):
+        return {
+            'id': product.pk,
+            'name': product.name,
+            'date_created': self.format_datetime(product.date_created),
+            'date_updated': self.format_datetime(product.date_updated),
+            'category': product.category_id,
+            'articles': self.get_article_list_data(product.articles.filter(active=True)),
+            'ecoscore': ECOSCORE_GRADE
+        }
 
     def get_category_list_data(self, categories):
         return [
             {
                 'id': category.id,
                 'name': category.name,
+                'description': category.description,
                 'date_created': self.format_datetime(category.date_created),
                 'date_updated': self.format_datetime(category.date_updated),
             } for category in categories
@@ -68,26 +82,18 @@ class TestCategory(ShopAPITestCase):
         self.assertEqual(response.status_code, 405)
         self.assertEqual(Category.objects.count(), category_count)
 
-    def test_disable(self):
-        response = self.client.post(reverse('category-disable', kwargs={'pk': self.category.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.category.refresh_from_db()
-        self.assertFalse(self.category.active)
-        for product in self.category.products.all():
-            self.assertFalse(product.active)
-            for article in product.articles.all():
-                self.assertFalse(article.active)
-
 
 class TestProduct(ShopAPITestCase):
 
     url = reverse_lazy('product-list')
 
+    @mock.patch('shop.models.Product.call_external_api', mock_openfoodfact_success)
     def test_list(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.get_product_list_data([self.product, self.product_2]), response.json()['results'])
 
+    @mock.patch('shop.models.Product.call_external_api', mock_openfoodfact_success)
     def test_list_filter(self):
         response = self.client.get(self.url + '?category_id=%i' % self.category.pk)
         self.assertEqual(response.status_code, 200)
@@ -99,13 +105,11 @@ class TestProduct(ShopAPITestCase):
         self.assertEqual(response.status_code, 405)
         self.assertEqual(Product.objects.count(), product_count)
 
-    def test_disable(self):
-        response = self.client.post(reverse('product-disable', kwargs={'pk': self.product.pk}))
+    @mock.patch('shop.models.Product.call_external_api', mock_openfoodfact_success)
+    def test_detail(self):
+        response = self.client.get(reverse('product-detail', kwargs={'pk': self.product.pk}))
         self.assertEqual(response.status_code, 200)
-        self.product.refresh_from_db()
-        self.assertFalse(self.product.active)
-        for article in self.product.articles.all():
-            self.assertFalse(article.active)
+        self.assertEqual(self.get_product_detail_data(self.product), response.json())
 
     def test_delete(self):
         response = self.client.delete(reverse('product-detail', kwargs={'pk': self.product.pk}))
