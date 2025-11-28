@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from shop.models import Category, Product, Article
 from shop.serializers import CategoryDetailSerializer, CategoryListSerializer,\
     ProductDetailSerializer, ProductListSerializer, ArticleSerializer
-
+from shop.permissions import isAdminAuthenticated
 
 class MultipleSerializerMixin:
 
@@ -21,7 +21,12 @@ class AdminCategoryViewset(MultipleSerializerMixin, ModelViewSet):
 
     serializer_class = CategoryListSerializer
     detail_serializer_class = CategoryDetailSerializer
-    queryset = Category.objects.all()
+    # Nous avons simplement à appliquer la permission sur le viewset
+    permission_classes = [isAdminAuthenticated]
+
+    def get_queryset(self):
+        return Category.objects.all()
+
 
 
 class CategoryViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
