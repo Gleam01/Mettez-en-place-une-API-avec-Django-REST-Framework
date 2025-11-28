@@ -15,7 +15,7 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'description', 'date_created', 'date_updated', 'products']
+        fields = ['id', 'name', 'date_created', 'date_updated', 'products']
 
     def get_products(self, instance):
         # Le paramètre 'instance' est l'instance de la catégorie consultée.
@@ -33,7 +33,7 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'category', 'date_created', 'date_updated']
+        fields = ['id', 'name', 'category', 'date_created', 'date_updated']
 
 class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
