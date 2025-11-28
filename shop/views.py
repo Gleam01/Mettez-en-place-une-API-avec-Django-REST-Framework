@@ -66,3 +66,10 @@ class ArticleViewset(ReadOnlyModelViewSet):
         if product_id is not None:
             queryset = queryset.filter(product_id=product_id)
         return queryset
+
+class AdminArticleViewset(ModelViewSet):
+
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        return Article.objects.all()
