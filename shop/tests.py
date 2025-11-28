@@ -8,13 +8,13 @@ class ShopAPITestCase(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.category = Category.objects.create(name='Fruits', active=True)
-        Category.objects.create(name='Légumes', active=False)
+        cls.category = Category.objects.create(name='Fruits', description='Fruits category', active=True)
+        Category.objects.create(name='Ordinateur', description='Ordinateur category', active=False)
 
         cls.product = cls.category.products.create(name='Ananas', active=True)
         cls.category.products.create(name='Banane', active=False)
 
-        cls.category_2 = Category.objects.create(name='Légumes', active=True)
+        cls.category_2 = Category.objects.create(name='Légumes', description='Légumes category', active=True)
         cls.product_2 = cls.category_2.products.create(name='Tomate', active=True)
 
     def format_datetime(self, value):
@@ -51,6 +51,19 @@ class ShopAPITestCase(APITestCase):
                 'date_updated': self.format_datetime(category.date_updated),
             } for category in categories
         ]
+    
+    def get_admin_category_list_data(self, categories):
+        return [
+            {
+                'id': category.id,
+                'name': category.name,
+                'description': category.description,
+                'active': category.active,
+                'date_created': self.format_datetime(category.date_created),
+                'date_updated': self.format_datetime(category.date_updated),
+            } for category in categories
+        ]
+
 
 
 class TestCategory(ShopAPITestCase):
@@ -60,13 +73,36 @@ class TestCategory(ShopAPITestCase):
     def test_list(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['results'], self.get_category_list_data([self.category, self.category_2]))
+        self.assertEqual(response.json()['results'], self.get_admin_category_list_data([self.category, self.category_2]))
 
     def test_create(self):
         category_count = Category.objects.count()
         response = self.client.post(self.url, data={'name': 'Nouvelle catégorie'})
         self.assertEqual(response.status_code, 405)
         self.assertEqual(Category.objects.count(), category_count)
+
+    '''
+    def test_admin_list_returns_all_categories_including_inactive(self):
+        # call the admin category list endpoint
+        response = self.client.get(reverse('admin-category-list'))
+        self.assertEqual(response.status_code, 200)
+    
+        # build expected payload from DB so ordering matches
+        data = response.json()
+        expected_results = self.get_admin_category_list_data(list(Category.objects.all()))
+
+        # ensure total count matches and returned page results match expected serialized objects
+        self.assertEqual(data['count'], Category.objects.count())
+        # API may paginate results or change ordering — compare by ids and membership
+        returned = data['results']
+        returned_ids = {item['id'] for item in returned}
+        expected_ids = {item['id'] for item in expected_results}
+        # returned ids must be a subset of expected ids (page may be partial)
+        self.assertTrue(returned_ids.issubset(expected_ids))
+        # ensure each returned item matches one of the expected serialized dicts
+        for item in returned:
+            self.assertIn(item, expected_results)
+    '''
 
     def test_disable(self):
         response = self.client.post(reverse('category-disable', kwargs={'pk': self.category.pk}))

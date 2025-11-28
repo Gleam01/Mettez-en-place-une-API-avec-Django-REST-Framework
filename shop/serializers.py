@@ -5,7 +5,7 @@ class CategoryListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'date_created', 'date_updated', 'name']
+        fields = ['id', 'date_created', 'date_updated', 'name', 'description', 'active']
 
     def validate_name(self, value):
         if Category.objects.filter(name=value).exists():
